@@ -1,37 +1,49 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { MemoryRouter } from 'react-router'
+import { describe, expect, it } from 'vitest'
 import App from './App'
+import { detail, listResponse, mockFetchJson } from './test/jobs'
 
-function mockFetch(status: number, body: unknown) {
-  return vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-    new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } }),
+function renderAt(url: string) {
+  return render(
+    <MemoryRouter initialEntries={[url]}>
+      <App />
+    </MemoryRouter>,
   )
 }
 
 describe('App', () => {
-  it('shows healthy backend status from /api/health', async () => {
-    const fetchSpy = mockFetch(200, { status: 'Healthy', checks: { database: 'Healthy' } })
+  it('shows the jobs list at /', async () => {
+    mockFetchJson(200, listResponse([]))
 
-    render(<App />)
+    renderAt('/')
 
-    expect(await screen.findByText('Healthy', { selector: 'strong' })).toBeInTheDocument()
-    expect(screen.getByText('database: Healthy')).toBeInTheDocument()
-    expect(fetchSpy).toHaveBeenCalledWith('/api/health', expect.anything())
+    expect(await screen.findByText('No jobs match these filters.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Sloffer' })).toHaveAttribute('href', '/')
   })
 
-  it('shows unhealthy status when the backend returns 503', async () => {
-    mockFetch(503, { status: 'Unhealthy', checks: { database: 'Unhealthy' } })
+  it('shows a job at /jobs/:id', async () => {
+    mockFetchJson(200, detail())
 
-    render(<App />)
+    renderAt('/jobs/11111111-1111-1111-1111-111111111111')
 
-    expect(await screen.findByText('Unhealthy', { selector: 'strong' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Senior .NET Developer' })).toBeInTheDocument()
   })
 
-  it('shows an error when the backend is unreachable', async () => {
-    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'))
+  it('credits the job sources in the footer with links', () => {
+    mockFetchJson(200, listResponse([]))
 
-    render(<App />)
+    renderAt('/')
 
-    expect(await screen.findByText(/Backend unreachable/)).toBeInTheDocument()
+    const footer = screen.getByRole('contentinfo')
+    expect(footer).toHaveTextContent('Jobs from Jobicy, Arbeitnow.')
+    expect(screen.getByRole('link', { name: 'Jobicy' })).toHaveAttribute('href', 'https://jobicy.com')
+    expect(screen.getByRole('link', { name: 'Arbeitnow' })).toHaveAttribute('href', 'https://www.arbeitnow.com')
+  })
+
+  it('shows not found for unknown routes', () => {
+    renderAt('/nope')
+
+    expect(screen.getByText('Page not found.')).toBeInTheDocument()
   })
 })

@@ -1,56 +1,36 @@
-import { useEffect, useState } from 'react'
-import { fetchHealth, type HealthResponse } from './api/health'
-
-type State =
-  | { kind: 'loading' }
-  | { kind: 'loaded'; health: HealthResponse }
-  | { kind: 'error'; message: string }
+import { Link, Route, Routes } from 'react-router'
+import { SOURCES } from './jobs/filters'
+import JobDetailPage from './jobs/JobDetailPage'
+import JobsPage from './jobs/JobsPage'
 
 export default function App() {
-  const [state, setState] = useState<State>({ kind: 'loading' })
-  const [reloadCount, setReloadCount] = useState(0)
-
-  useEffect(() => {
-    const controller = new AbortController()
-    fetchHealth(controller.signal)
-      .then((health) => setState({ kind: 'loaded', health }))
-      .catch((error: unknown) => {
-        if (controller.signal.aborted) return
-        setState({ kind: 'error', message: error instanceof Error ? error.message : String(error) })
-      })
-    return () => controller.abort()
-  }, [reloadCount])
-
-  function refresh() {
-    setState({ kind: 'loading' })
-    setReloadCount((n) => n + 1)
-  }
-
   return (
-    <main className="page">
-      <h1>Sloffer</h1>
-      <section className="card" aria-live="polite">
-        <h2>Backend health</h2>
-        {state.kind === 'loading' && <p>Checking…</p>}
-        {state.kind === 'error' && <p className="bad">Backend unreachable: {state.message}</p>}
-        {state.kind === 'loaded' && (
-          <>
-            <p className={state.health.status === 'Healthy' ? 'good' : 'bad'}>
-              Status: <strong>{state.health.status}</strong>
-            </p>
-            <ul>
-              {Object.entries(state.health.checks).map(([name, status]) => (
-                <li key={name}>
-                  {name}: {status}
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-        <button type="button" onClick={refresh} disabled={state.kind === 'loading'}>
-          Refresh
-        </button>
-      </section>
-    </main>
+    <div className="page">
+      <header className="site-header">
+        <Link to="/" className="brand">
+          Sloffer
+        </Link>
+        <span className="muted">.NET jobs in EMEA, best matches first</span>
+      </header>
+      <main>
+        <Routes>
+          <Route path="/" element={<JobsPage />} />
+          <Route path="/jobs/:id" element={<JobDetailPage />} />
+          <Route path="*" element={<p className="card">Page not found.</p>} />
+        </Routes>
+      </main>
+      <footer className="site-footer muted">
+        Jobs from{' '}
+        {SOURCES.map((s, i) => (
+          <span key={s.value}>
+            {i > 0 && ', '}
+            <a href={s.site} target="_blank" rel="noopener noreferrer">
+              {s.label}
+            </a>
+          </span>
+        ))}
+        .
+      </footer>
+    </div>
   )
 }
