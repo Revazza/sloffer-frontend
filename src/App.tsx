@@ -24,7 +24,7 @@ export default function App() {
         {SOURCES.map((s, i) => (
           <span key={s.value}>
             {i > 0 && ', '}
-            <a href={s.site} target="_blank" rel="noopener noreferrer">
+            <a href={s.site} target="_blank" rel="noopener">
               {s.label}
             </a>
           </span>

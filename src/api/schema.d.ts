@@ -71,10 +71,12 @@ export interface paths {
                     PostedWithinHours?: number | string;
                     /** @description Include jobs marked as duplicates of another job (same company and title, possibly from another source). Default false: duplicates are hidden and not counted in totalCount. */
                     IncludeDuplicates?: boolean;
-                    /** @description Hide scored jobs whose score is below this value, 0 to 100. Default 1 hides jobs that failed a hard rule (score 0); 0 shows all. Jobs not scored yet (score null) are always shown. */
+                    /** @description Hide scored jobs whose score is below this value, 0 to 100. Default 55: only Good (55-74) and Excellent (75-100) matches. Bands: 75-100 Excellent, 55-74 Good, 35-54 Maybe, 1-34 Weak, 0 rejected. Pass 1 to hide only rejected jobs, 0 to show all. Jobs not scored yet (score null) are always shown. */
                     MinScore?: number | string;
                     /** @description 'score' (default): highest score first, unscored jobs last, then newest first, then id. 'posted': newest first, then id. */
                     Sort?: string;
+                    /** @description Hide jobs already viewed (viewedAt set). Default false. */
+                    HideViewed?: boolean;
                 };
                 header?: never;
                 path?: never;
@@ -164,6 +166,82 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/jobs/{id}/viewed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -193,6 +271,8 @@ export interface components {
             /** Format: int32 */
             score: null | number | string;
             scoreReasons: string[];
+            /** Format: date-time */
+            viewedAt: null | string;
         };
         JobListItem: {
             /** Format: uuid */
@@ -212,6 +292,8 @@ export interface components {
             /** Format: int32 */
             score: null | number | string;
             scoreReasons: string[];
+            /** Format: date-time */
+            viewedAt: null | string;
         };
         JobListResponse: {
             items: components["schemas"]["JobListItem"][];

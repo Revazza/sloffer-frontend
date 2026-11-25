@@ -2,6 +2,8 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { fetchJobs, type JobListResponse } from '../api/jobs'
 import {
+  DEFAULT_FILTERS,
+  MIN_SCORE_OPTIONS,
   PAGE_SIZE,
   POSTED_WITHIN_OPTIONS,
   SOURCES,
@@ -14,6 +16,7 @@ import {
   type SortOrder,
 } from './filters'
 import { ScoreBadge } from './ScoreBadge'
+import { SourceBadge } from './SourceBadge'
 import { timeAgo } from './format'
 
 /** The outcome of the request for `query`. While it belongs to another query, the page shows loading. */
@@ -55,7 +58,7 @@ export default function JobsPage() {
             Could not load jobs: {state.message}
           </p>
         )}
-        {state.kind === 'loaded' && <JobList data={state.data} onPage={(page) => apply({ page })} />}
+        {state.kind === 'loaded' && <JobList data={state.data} filters={filters} onPage={(page) => apply({ page })} />}
       </section>
     </>
   )
@@ -130,31 +133,42 @@ function FilterForm({ filters, onApply }: { filters: JobFilters; onApply: (chang
         />
         Include duplicates
       </label>
+      <label className="checkbox">
+        <input type="checkbox" checked={filters.hideViewed} onChange={(e) => onApply({ hideViewed: e.target.checked })} />
+        Hide viewed
+      </label>
       <button type="submit">Search</button>
     </form>
   )
 }
 
-const MIN_SCORE_OPTIONS = [
-  { value: 0, label: 'Any (show rejected)' },
-  { value: 1, label: '1+ (hide rejected)' },
-  { value: 45, label: '45+' },
-  { value: 60, label: '60+' },
-]
-
 /** The fixed choices, plus the current value when a shared URL used another one (e.g. minScore=30). */
 function minScoreOptions(current: number) {
   if (MIN_SCORE_OPTIONS.some((o) => o.value === current)) return MIN_SCORE_OPTIONS
-  return [...MIN_SCORE_OPTIONS, { value: current, label: `${current}+` }].sort((a, b) => a.value - b.value)
+  return [...MIN_SCORE_OPTIONS, { value: current, label: `${current}+` }].sort((a, b) => b.value - a.value)
 }
 
-function JobList({ data, onPage }: { data: JobListResponse; onPage: (page: number) => void }) {
+function JobList({
+  data,
+  filters,
+  onPage,
+}: {
+  data: JobListResponse
+  filters: JobFilters
+  onPage: (page: number) => void
+}) {
   const totalCount = Number(data.totalCount)
   const page = Number(data.page)
   const pageCount = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
 
   if (data.items.length === 0) {
-    return <p className="card muted">No jobs match these filters.</p>
+    const strictDefaults = filters.minScore >= DEFAULT_FILTERS.minScore || filters.postedWithinHours < 168
+    return (
+      <p className="card muted">
+        No jobs match these filters.
+        {strictDefaults && ' Only excellent matches are shown: try "Last 7 days" or a lower minimum score.'}
+      </p>
+    )
   }
 
   return (
@@ -164,7 +178,7 @@ function JobList({ data, onPage }: { data: JobListResponse; onPage: (page: numbe
       </p>
       <ul className="job-list">
         {data.items.map((job) => (
-          <li key={job.id} className="card job">
+          <li key={job.id} className={job.viewedAt ? 'card job viewed' : 'card job'}>
             <div className="job-head">
               <Link to={`/jobs/${job.id}`} className="job-title">
                 {job.title}
@@ -172,9 +186,15 @@ function JobList({ data, onPage }: { data: JobListResponse; onPage: (page: numbe
               <ScoreBadge score={job.score} />
             </div>
             <p className="job-meta">
-              {job.company}
+              <SourceBadge source={job.source} /> · {job.company}
               {job.location && <> · {job.location}</>} · <time dateTime={job.postedAt}>{timeAgo(job.postedAt)}</time>
               {job.duplicateOfId && <> · duplicate</>}
+              {job.viewedAt && (
+                <>
+                  {' '}
+                  <span className="chip">Viewed</span>
+                </>
+              )}
             </p>
             {job.scoreReasons.length > 0 && (
               <ul className="reasons">

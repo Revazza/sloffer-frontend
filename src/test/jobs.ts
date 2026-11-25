@@ -15,7 +15,8 @@ export function listItem(overrides: Partial<JobListItem> = {}): JobListItem {
     descriptionExcerpt: 'Build APIs',
     duplicateOfId: null,
     score: 66,
-    scoreReasons: ['title mentions .NET/C# (+15)', 'senior title (+5)', 'domain: payments (+12)'],
+    scoreReasons: ['.NET core: in title (+25)', 'senior title (+5)', 'domain: payments (+12)'],
+    viewedAt: null,
     ...overrides,
   }
 }
@@ -39,7 +40,8 @@ export function detail(overrides: Partial<JobDetail> = {}): JobDetail {
     postedAt: '2026-11-24T08:00:00Z',
     fetchedAt: '2026-11-24T09:00:00Z',
     score: 66,
-    scoreReasons: ['title mentions .NET/C# (+15)', 'senior title (+5)', 'domain: payments (+12)'],
+    scoreReasons: ['.NET core: in title (+25)', 'senior title (+5)', 'domain: payments (+12)'],
+    viewedAt: null,
     ...overrides,
   }
 }

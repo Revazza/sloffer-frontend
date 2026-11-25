@@ -18,12 +18,25 @@ export function scoreValue(score: number | string | null): number | null {
   return Number.isFinite(value) ? value : null
 }
 
-/** Colour band for the score badge. */
-export function scoreTone(score: number | null): 'high' | 'mid' | 'low' | 'none' {
+export type ScoreBand = 'excellent' | 'good' | 'maybe' | 'weak' | 'rejected' | 'none'
+
+/** Score bands, as in the backend README: 75+ Excellent, 55-74 Good, 35-54 Maybe, 1-34 Weak, 0 rejected. */
+export function scoreBand(score: number | null): ScoreBand {
   if (score === null) return 'none'
-  if (score >= 60) return 'high'
-  if (score >= 45) return 'mid'
-  return 'low'
+  if (score >= 75) return 'excellent'
+  if (score >= 55) return 'good'
+  if (score >= 35) return 'maybe'
+  if (score >= 1) return 'weak'
+  return 'rejected'
+}
+
+export const BAND_LABELS: Record<ScoreBand, string> = {
+  excellent: 'Excellent',
+  good: 'Good',
+  maybe: 'Maybe',
+  weak: 'Weak',
+  rejected: 'Rejected',
+  none: 'Not scored',
 }
 
 export function formatDate(iso: string): string {

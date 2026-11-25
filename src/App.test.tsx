@@ -18,7 +18,7 @@ describe('App', () => {
 
     renderAt('/')
 
-    expect(await screen.findByText('No jobs match these filters.')).toBeInTheDocument()
+    expect(await screen.findByText(/No jobs match these filters/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Sloffer' })).toHaveAttribute('href', '/')
   })
 
@@ -36,9 +36,14 @@ describe('App', () => {
     renderAt('/')
 
     const footer = screen.getByRole('contentinfo')
-    expect(footer).toHaveTextContent('Jobs from Jobicy, Arbeitnow.')
+    expect(footer).toHaveTextContent('Jobs from Jobicy, Arbeitnow, Remotive, Remote OK.')
     expect(screen.getByRole('link', { name: 'Jobicy' })).toHaveAttribute('href', 'https://jobicy.com')
     expect(screen.getByRole('link', { name: 'Arbeitnow' })).toHaveAttribute('href', 'https://www.arbeitnow.com')
+    expect(screen.getByRole('link', { name: 'Remotive' })).toHaveAttribute('href', 'https://remotive.com')
+    const remoteOk = screen.getByRole('link', { name: 'Remote OK' })
+    expect(remoteOk).toHaveAttribute('href', 'https://remoteok.com')
+    // Remote OK asks for a followed link: no nofollow (and no noreferrer, so they see the traffic).
+    expect(remoteOk).toHaveAttribute('rel', 'noopener')
   })
 
   it('shows not found for unknown routes', () => {

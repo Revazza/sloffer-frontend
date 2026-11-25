@@ -34,6 +34,22 @@ export async function fetchJob(id: string, signal?: AbortSignal): Promise<JobDet
   return (await response.json()) as JobDetail
 }
 
+/** POST /api/jobs/{id}/viewed: marks the job as viewed (keeps the first viewed time). */
+export async function markViewed(id: string, signal?: AbortSignal): Promise<void> {
+  await sendViewed('POST', id, signal)
+}
+
+/** DELETE /api/jobs/{id}/viewed: marks the job as not viewed. */
+export async function unmarkViewed(id: string, signal?: AbortSignal): Promise<void> {
+  await sendViewed('DELETE', id, signal)
+}
+
+async function sendViewed(method: 'POST' | 'DELETE', id: string, signal?: AbortSignal): Promise<void> {
+  const response = await fetch(`/api/jobs/${encodeURIComponent(id)}/viewed`, { method, signal })
+  if (response.status === 404) throw new JobNotFoundError(id)
+  if (!response.ok) throw new Error(await errorMessage(response, 'Viewed request failed'))
+}
+
 /** Uses the validation messages of a 400 problem details body when there are any. */
 async function errorMessage(response: Response, prefix: string): Promise<string> {
   if (response.status === 400) {
