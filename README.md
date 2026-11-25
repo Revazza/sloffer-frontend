@@ -2,8 +2,8 @@
 
 React web UI for **Sloffer**: lists recent .NET jobs in EMEA from the [backend](https://github.com/revazza/sloffer-backend), best matches first, with the reasons behind each score.
 
-- **Jobs** (`/`): by default only **Excellent** matches (score 75+) from the last 24 hours, best first, up to 100 on one page. Filters: text, location, source, minimum score (Excellent / Good / Maybe / Any), sort (best match / newest), posted within (24 h / 3 days / 7 days), duplicates and **hide viewed**. Each job shows its score with its band, its source (a small text monogram and the name; no third-party logos), and a **Viewed** chip once opened. Filters live in the URL, so a filtered list can be bookmarked or shared and survives a refresh.
-- **Job detail** (`/jobs/:id`): full (sanitized) description, all score reasons, source, posted date and a link to the original posting. Opening it marks the job viewed (stored in the backend), with a "Mark as not viewed" button.
+- **Jobs** (`/`): by default only **Excellent** matches (score 75+) from the last 24 hours, best first, up to 100 on one page. Filters: text, location, source, minimum score (Excellent / Good / Maybe / Any), sort (best match / newest), posted within (24 h / 3 days / 7 days), duplicates and **hide viewed**. Each job shows its score with its band, its source (a small text monogram and the name; no third-party logos), and a **Viewed** chip once its posting was opened. Filters live in the URL, so a filtered list can be bookmarked or shared and survives a refresh.
+- **Job detail** (`/jobs/:id`): full (sanitized) description, all score reasons, source, posted date and a link to the original posting. A job is marked viewed (stored in the backend) when you click its link to the original posting, from the list ("Open posting") or the detail page; the detail page also has a "Mark as viewed / not viewed" button.
 
 ## Run backend and frontend together
 

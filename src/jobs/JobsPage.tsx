@@ -16,6 +16,7 @@ import {
   type SortOrder,
 } from './filters'
 import { ScoreBadge } from './ScoreBadge'
+import { OriginalPostingLink } from './OriginalPostingLink'
 import { SourceBadge } from './SourceBadge'
 import { timeAgo } from './format'
 
@@ -44,6 +45,14 @@ export default function JobsPage() {
     return () => controller.abort()
   }, [apiQuery])
 
+  function setViewedAt(id: string, viewedAt: string) {
+    setResult((current) =>
+      current?.kind === 'loaded'
+        ? { ...current, data: { ...current.data, items: current.data.items.map((j) => (j.id === id ? { ...j, viewedAt } : j)) } }
+        : current,
+    )
+  }
+
   function apply(change: Partial<JobFilters>) {
     setSearchParams(toSearchParams(updateFilters(filters, change)))
   }
@@ -58,7 +67,9 @@ export default function JobsPage() {
             Could not load jobs: {state.message}
           </p>
         )}
-        {state.kind === 'loaded' && <JobList data={state.data} filters={filters} onPage={(page) => apply({ page })} />}
+        {state.kind === 'loaded' && (
+          <JobList data={state.data} filters={filters} onPage={(page) => apply({ page })} onViewed={setViewedAt} />
+        )}
       </section>
     </>
   )
@@ -152,10 +163,12 @@ function JobList({
   data,
   filters,
   onPage,
+  onViewed,
 }: {
   data: JobListResponse
   filters: JobFilters
   onPage: (page: number) => void
+  onViewed: (id: string, viewedAt: string) => void
 }) {
   const totalCount = Number(data.totalCount)
   const page = Number(data.page)
@@ -203,6 +216,11 @@ function JobList({
                 ))}
               </ul>
             )}
+            <p className="job-actions">
+              <OriginalPostingLink job={job} onViewed={(viewedAt) => onViewed(job.id, viewedAt)}>
+                Open posting ↗
+              </OriginalPostingLink>
+            </p>
           </li>
         ))}
       </ul>

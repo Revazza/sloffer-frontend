@@ -181,6 +181,21 @@ describe('JobsPage', () => {
     expect(within(fresh).queryByText('Viewed')).not.toBeInTheDocument()
   })
 
+  it('open posting links to the source in a new tab and marks the job viewed on click', async () => {
+    const fetchSpy = mockFetchJson(200, listResponse([listItem({ id: 'a', title: 'New job', url: 'https://remotive.com/jobs/1' })]))
+    renderPage()
+    const row = (await screen.findByRole('link', { name: 'New job' })).closest('li') as HTMLElement
+    const posting = within(row).getByRole('link', { name: /Open posting/ })
+    expect(posting).toHaveAttribute('href', 'https://remotive.com/jobs/1')
+    expect(posting).toHaveAttribute('target', '_blank')
+    expect(within(row).queryByText('Viewed')).not.toBeInTheDocument()
+
+    fireEvent.click(posting)
+
+    expect(await within(row).findByText('Viewed')).toBeInTheDocument()
+    expect(fetchSpy).toHaveBeenLastCalledWith('/api/jobs/a/viewed', expect.objectContaining({ method: 'POST' }))
+  })
+
   it('hide viewed writes to the URL and the API query', async () => {
     const fetchSpy = mockFetchJson(200, listResponse([]))
     renderPage()
