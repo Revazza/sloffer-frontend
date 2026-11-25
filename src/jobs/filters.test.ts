@@ -8,7 +8,7 @@ describe('parseFilters', () => {
 
   it('reads every filter from the query string', () => {
     const filters = parseFilters(
-      new URLSearchParams('q=.net&location=Germany&source=jobicy&minScore=45&sort=posted&posted=24&duplicates=true&page=3'),
+      new URLSearchParams('q=.net&location=Germany&source=jobicy&minScore=45&sort=posted&posted=168&duplicates=true&hideViewed=true&page=3'),
     )
 
     expect(filters).toEqual({
@@ -17,18 +17,20 @@ describe('parseFilters', () => {
       source: 'jobicy',
       minScore: 45,
       sort: 'posted',
-      postedWithinHours: 24,
+      postedWithinHours: 168,
       includeDuplicates: true,
+      hideViewed: true,
       page: 3,
     })
   })
 
   it.each([
-    ['minScore=-1', 'minScore', 1],
-    ['minScore=101', 'minScore', 1],
-    ['minScore=abc', 'minScore', 1],
+    ['minScore=-1', 'minScore', 75],
+    ['minScore=101', 'minScore', 75],
+    ['minScore=abc', 'minScore', 75],
     ['sort=random', 'sort', 'score'],
-    ['posted=48', 'postedWithinHours', 168],
+    ['posted=48', 'postedWithinHours', 24],
+    ['hideViewed=yes', 'hideViewed', false],
     ['page=0', 'page', 1],
     ['page=2.5', 'page', 1],
     ['duplicates=yes', 'includeDuplicates', false],
@@ -56,12 +58,13 @@ describe('toSearchParams', () => {
 describe('toApiQuery', () => {
   it('sends every API parameter explicitly, including defaults and page size', () => {
     expect(Object.fromEntries(toApiQuery(DEFAULT_FILTERS))).toEqual({
-      minScore: '1',
+      minScore: '75',
       sort: 'score',
-      postedWithinHours: '168',
+      postedWithinHours: '24',
       includeDuplicates: 'false',
+      hideViewed: 'false',
       page: '1',
-      pageSize: '20',
+      pageSize: '100',
     })
   })
 

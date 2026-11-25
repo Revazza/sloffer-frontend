@@ -191,21 +191,67 @@ button:disabled {
   background: var(--chip);
 }
 
-.score-high {
+.score-excellent {
+  color: #fff;
+  background: var(--good);
+}
+
+.score-good {
   color: var(--good);
 }
 
-.score-mid {
+.score-maybe {
   color: var(--mid);
 }
 
-.score-low {
+.score-weak,
+.score-rejected {
   color: var(--bad);
 }
 
 .score-none {
   color: var(--muted);
   font-weight: 400;
+}
+
+.source {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  white-space: nowrap;
+}
+
+.source-icon {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 0.2rem;
+  border-radius: 0.3rem;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.chip {
+  display: inline-block;
+  font-size: 0.75rem;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background: var(--chip);
+  color: var(--muted);
+}
+
+.job.viewed {
+  opacity: 0.65;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .pager {

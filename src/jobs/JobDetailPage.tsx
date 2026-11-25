@@ -1,9 +1,9 @@
 import DOMPurify from 'dompurify'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
-import { JobNotFoundError, fetchJob, type JobDetail } from '../api/jobs'
-import { SOURCES } from './filters'
+import { JobNotFoundError, fetchJob, markViewed, unmarkViewed, type JobDetail } from '../api/jobs'
 import { ScoreBadge } from './ScoreBadge'
+import { SourceBadge } from './SourceBadge'
 import { formatDate, timeAgo } from './format'
 
 /** The outcome of the request for job `id`. While it belongs to another id, the page shows loading. */
@@ -19,10 +19,32 @@ export default function JobDetailPage() {
   const [result, setResult] = useState<Result | null>(null)
   const state: State = result?.id === id ? result : { kind: 'loading' }
 
+  function setViewedAt(viewedAt: string | null) {
+    setResult((current) =>
+      current?.id === id && current.kind === 'loaded' ? { ...current, job: { ...current.job, viewedAt } } : current,
+    )
+  }
+
   useEffect(() => {
     const controller = new AbortController()
     fetchJob(id, controller.signal)
-      .then((job) => setResult({ id, kind: 'loaded', job }))
+      .then((job) => {
+        setResult({ id, kind: 'loaded', job })
+        // Opening a job marks it viewed, so it is never looked at or applied to twice.
+        if (!job.viewedAt) {
+          markViewed(id, controller.signal)
+            .then(() =>
+              setResult((current) =>
+                current?.id === id && current.kind === 'loaded'
+                  ? { ...current, job: { ...current.job, viewedAt: new Date().toISOString() } }
+                  : current,
+              ),
+            )
+            .catch(() => {
+              // Not critical: the job stays "not viewed" and can be marked by hand.
+            })
+        }
+      })
       .catch((error: unknown) => {
         if (controller.signal.aborted) return
         if (error instanceof JobNotFoundError) setResult({ id, kind: 'not-found' })
@@ -43,15 +65,30 @@ export default function JobDetailPage() {
           Could not load the job: {state.message}
         </p>
       )}
-      {state.kind === 'loaded' && <JobDetailView job={state.job} />}
+      {state.kind === 'loaded' && <JobDetailView job={state.job} onViewedChange={setViewedAt} />}
     </>
   )
 }
 
-function JobDetailView({ job }: { job: JobDetail }) {
-  const sourceLabel = SOURCES.find((s) => s.value === job.source)?.label ?? job.source
+function JobDetailView({ job, onViewedChange }: { job: JobDetail; onViewedChange: (viewedAt: string | null) => void }) {
+  const [viewedError, setViewedError] = useState<string | null>(null)
   // Listing HTML comes from third-party job boards: sanitize before rendering.
   const description = job.description ? DOMPurify.sanitize(job.description) : ''
+
+  async function toggleViewed() {
+    setViewedError(null)
+    try {
+      if (job.viewedAt) {
+        await unmarkViewed(job.id)
+        onViewedChange(null)
+      } else {
+        await markViewed(job.id)
+        onViewedChange(new Date().toISOString())
+      }
+    } catch (error: unknown) {
+      setViewedError(error instanceof Error ? error.message : String(error))
+    }
+  }
 
   return (
     <article className="card detail">
@@ -65,13 +102,24 @@ function JobDetailView({ job }: { job: JobDetail }) {
         {job.employmentTypes && <> · {job.employmentTypes}</>}
       </p>
       <p className="job-meta">
-        From {sourceLabel} · posted <time dateTime={job.postedAt}>{formatDate(job.postedAt)}</time> ({timeAgo(job.postedAt)})
+        From <SourceBadge source={job.source} /> · posted <time dateTime={job.postedAt}>{formatDate(job.postedAt)}</time> (
+        {timeAgo(job.postedAt)})
       </p>
-      <p>
-        <a className="button" href={job.url} target="_blank" rel="noopener noreferrer">
+      <p className="actions">
+        {/* No "noreferrer": job boards ask for traffic back from the listings they share. */}
+        <a className="button" href={job.url} target="_blank" rel="noopener">
           Open original posting ↗
         </a>
+        <button type="button" onClick={toggleViewed}>
+          {job.viewedAt ? 'Mark as not viewed' : 'Mark as viewed'}
+        </button>
+        {job.viewedAt && <span className="chip">Viewed {formatDate(job.viewedAt)}</span>}
       </p>
+      {viewedError && (
+        <p className="bad" role="alert">
+          {viewedError}
+        </p>
+      )}
       <h2>Why this score</h2>
       {job.scoreReasons.length > 0 ? (
         <ul className="reasons">

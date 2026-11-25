@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { scoreTone, scoreValue, timeAgo } from './format'
+import { BAND_LABELS, scoreBand, scoreValue, timeAgo } from './format'
 
 describe('timeAgo', () => {
   const now = new Date('2026-11-25T12:00:00Z')
@@ -28,15 +28,23 @@ describe('scoreValue', () => {
   })
 })
 
-describe('scoreTone', () => {
+describe('scoreBand', () => {
   it.each([
     [null, 'none'],
-    [0, 'low'],
-    [44, 'low'],
-    [45, 'mid'],
-    [59, 'mid'],
-    [60, 'high'],
-  ] as const)('puts %j in band %s', (score, tone) => {
-    expect(scoreTone(score)).toBe(tone)
+    [0, 'rejected'],
+    [1, 'weak'],
+    [34, 'weak'],
+    [35, 'maybe'],
+    [54, 'maybe'],
+    [55, 'good'],
+    [74, 'good'],
+    [75, 'excellent'],
+    [100, 'excellent'],
+  ] as const)('puts %j in band %s', (score, band) => {
+    expect(scoreBand(score)).toBe(band)
+  })
+
+  it('has a label for every band', () => {
+    expect(Object.values(BAND_LABELS)).toEqual(['Excellent', 'Good', 'Maybe', 'Weak', 'Rejected', 'Not scored'])
   })
 })

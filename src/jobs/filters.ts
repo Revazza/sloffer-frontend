@@ -7,6 +7,7 @@ export type JobFilters = {
   sort: SortOrder
   postedWithinHours: PostedWithin
   includeDuplicates: boolean
+  hideViewed: boolean
   page: number
 }
 
@@ -21,22 +22,38 @@ export const POSTED_WITHIN_OPTIONS: readonly { value: PostedWithin; label: strin
   { value: 168, label: 'Last 7 days' },
 ]
 
-/** Source names exactly as the backend stores them (the API's `source` filter is an exact match). */
-export const SOURCES: readonly { value: string; label: string; site: string }[] = [
-  { value: 'jobicy', label: 'Jobicy', site: 'https://jobicy.com' },
-  { value: 'Arbeitnow', label: 'Arbeitnow', site: 'https://www.arbeitnow.com' },
+/**
+ * Source names exactly as the backend stores them (the API's `source` filter is an exact match), with the text
+ * monogram and colour of their badge. No third-party logos: Remote OK forbids using theirs.
+ */
+export const SOURCES: readonly { value: string; label: string; site: string; monogram: string; color: string }[] = [
+  { value: 'jobicy', label: 'Jobicy', site: 'https://jobicy.com', monogram: 'J', color: '#7b4dff' },
+  { value: 'Arbeitnow', label: 'Arbeitnow', site: 'https://www.arbeitnow.com', monogram: 'A', color: '#0a7cff' },
+  { value: 'Remotive', label: 'Remotive', site: 'https://remotive.com', monogram: 'R', color: '#e8590c' },
+  { value: 'Remote OK', label: 'Remote OK', site: 'https://remoteok.com', monogram: 'OK', color: '#2b8a3e' },
 ]
 
-export const PAGE_SIZE = 20
+/** At most this many jobs per page: the list shows up to 100 best matches a day. */
+export const PAGE_SIZE = 100
 
+/** Minimum-score choices, by score band (same bands as the backend README). */
+export const MIN_SCORE_OPTIONS: readonly { value: number; label: string }[] = [
+  { value: 75, label: 'Excellent (75+)' },
+  { value: 55, label: 'Good (55+)' },
+  { value: 35, label: 'Maybe (35+)' },
+  { value: 0, label: 'Any (incl. rejected)' },
+]
+
+/** Only Excellent matches from the last 24 hours, best first: at most 100 a day (one page). */
 export const DEFAULT_FILTERS: JobFilters = {
   q: '',
   location: '',
   source: '',
-  minScore: 1,
+  minScore: 75,
   sort: 'score',
-  postedWithinHours: 168,
+  postedWithinHours: 24,
   includeDuplicates: false,
+  hideViewed: false,
   page: 1,
 }
 
@@ -55,6 +72,7 @@ export function parseFilters(params: URLSearchParams): JobFilters {
     sort: sort === 'score' || sort === 'posted' ? sort : DEFAULT_FILTERS.sort,
     postedWithinHours: POSTED_WITHIN_OPTIONS.find((o) => o.value === posted)?.value ?? DEFAULT_FILTERS.postedWithinHours,
     includeDuplicates: params.get('duplicates') === 'true',
+    hideViewed: params.get('hideViewed') === 'true',
     page: page !== null && page >= 1 ? page : DEFAULT_FILTERS.page,
   }
 }
@@ -69,6 +87,7 @@ export function toSearchParams(filters: JobFilters): URLSearchParams {
   if (filters.sort !== DEFAULT_FILTERS.sort) params.set('sort', filters.sort)
   if (filters.postedWithinHours !== DEFAULT_FILTERS.postedWithinHours) params.set('posted', String(filters.postedWithinHours))
   if (filters.includeDuplicates) params.set('duplicates', 'true')
+  if (filters.hideViewed) params.set('hideViewed', 'true')
   if (filters.page !== DEFAULT_FILTERS.page) params.set('page', String(filters.page))
   return params
 }
@@ -83,6 +102,7 @@ export function toApiQuery(filters: JobFilters): URLSearchParams {
   params.set('sort', filters.sort)
   params.set('postedWithinHours', String(filters.postedWithinHours))
   params.set('includeDuplicates', String(filters.includeDuplicates))
+  params.set('hideViewed', String(filters.hideViewed))
   params.set('page', String(filters.page))
   params.set('pageSize', String(PAGE_SIZE))
   return params
