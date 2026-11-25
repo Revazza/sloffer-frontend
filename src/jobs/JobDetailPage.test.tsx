@@ -36,13 +36,25 @@ describe('JobDetailPage', () => {
     expect(screen.getByRole('link', { name: '← All jobs' })).toHaveAttribute('href', '/')
   })
 
-  it('marks the job viewed when it is opened', async () => {
+  it('opening the job page does not mark it viewed', async () => {
     const fetchSpy = mockFetchJson(200, detail({ viewedAt: null }))
 
     renderPage()
 
+    expect(await screen.findByRole('button', { name: 'Mark as viewed' })).toBeInTheDocument()
+    expect(fetchSpy).toHaveBeenCalledTimes(1)
+    expect(screen.queryByText(/^Viewed /)).not.toBeInTheDocument()
+  })
+
+  it('clicking the original posting link marks the job viewed', async () => {
+    const fetchSpy = mockFetchJson(200, detail({ viewedAt: null }))
+    renderPage()
+    const link = await screen.findByRole('link', { name: /Open original posting/ })
+
+    fireEvent.click(link)
+
     expect(await screen.findByText(/^Viewed /)).toBeInTheDocument()
-    expect(fetchSpy).toHaveBeenCalledWith(
+    expect(fetchSpy).toHaveBeenLastCalledWith(
       '/api/jobs/11111111-1111-1111-1111-111111111111/viewed',
       expect.objectContaining({ method: 'POST' }),
     )

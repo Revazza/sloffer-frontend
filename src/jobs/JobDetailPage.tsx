@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { JobNotFoundError, fetchJob, markViewed, unmarkViewed, type JobDetail } from '../api/jobs'
 import { ScoreBadge } from './ScoreBadge'
+import { OriginalPostingLink } from './OriginalPostingLink'
 import { SourceBadge } from './SourceBadge'
 import { formatDate, timeAgo } from './format'
 
@@ -28,23 +29,7 @@ export default function JobDetailPage() {
   useEffect(() => {
     const controller = new AbortController()
     fetchJob(id, controller.signal)
-      .then((job) => {
-        setResult({ id, kind: 'loaded', job })
-        // Opening a job marks it viewed, so it is never looked at or applied to twice.
-        if (!job.viewedAt) {
-          markViewed(id, controller.signal)
-            .then(() =>
-              setResult((current) =>
-                current?.id === id && current.kind === 'loaded'
-                  ? { ...current, job: { ...current.job, viewedAt: new Date().toISOString() } }
-                  : current,
-              ),
-            )
-            .catch(() => {
-              // Not critical: the job stays "not viewed" and can be marked by hand.
-            })
-        }
-      })
+      .then((job) => setResult({ id, kind: 'loaded', job }))
       .catch((error: unknown) => {
         if (controller.signal.aborted) return
         if (error instanceof JobNotFoundError) setResult({ id, kind: 'not-found' })
@@ -107,9 +92,9 @@ function JobDetailView({ job, onViewedChange }: { job: JobDetail; onViewedChange
       </p>
       <p className="actions">
         {/* No "noreferrer": job boards ask for traffic back from the listings they share. */}
-        <a className="button" href={job.url} target="_blank" rel="noopener">
+        <OriginalPostingLink job={job} className="button" onViewed={onViewedChange}>
           Open original posting ↗
-        </a>
+        </OriginalPostingLink>
         <button type="button" onClick={toggleViewed}>
           {job.viewedAt ? 'Mark as not viewed' : 'Mark as viewed'}
         </button>
