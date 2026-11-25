@@ -106,6 +106,15 @@ describe('JobsPage', () => {
     expect(screen.getByRole('checkbox', { name: 'Include duplicates' })).toBeChecked()
   })
 
+  it('shows a minimum score from the URL that is not one of the fixed choices', async () => {
+    mockFetchJson(200, listResponse([]))
+
+    renderPage('/?minScore=30')
+
+    await screen.findByText('No jobs match these filters.')
+    expect(screen.getByRole('combobox', { name: 'Minimum score' })).toHaveValue('30')
+  })
+
   it('writes a changed select to the URL, resets the page and refetches', async () => {
     const fetchSpy = mockFetchJson(200, listResponse([]))
     renderPage('/?page=3')

@@ -95,10 +95,11 @@ function FilterForm({ filters, onApply }: { filters: JobFilters; onApply: (chang
       <label>
         Minimum score
         <select value={filters.minScore} onChange={(e) => onApply({ minScore: Number(e.target.value) })}>
-          <option value={0}>Any (show rejected)</option>
-          <option value={1}>1+ (hide rejected)</option>
-          <option value={45}>45+</option>
-          <option value={60}>60+</option>
+          {minScoreOptions(filters.minScore).map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
         </select>
       </label>
       <label>
@@ -132,6 +133,19 @@ function FilterForm({ filters, onApply }: { filters: JobFilters; onApply: (chang
       <button type="submit">Search</button>
     </form>
   )
+}
+
+const MIN_SCORE_OPTIONS = [
+  { value: 0, label: 'Any (show rejected)' },
+  { value: 1, label: '1+ (hide rejected)' },
+  { value: 45, label: '45+' },
+  { value: 60, label: '60+' },
+]
+
+/** The fixed choices, plus the current value when a shared URL used another one (e.g. minScore=30). */
+function minScoreOptions(current: number) {
+  if (MIN_SCORE_OPTIONS.some((o) => o.value === current)) return MIN_SCORE_OPTIONS
+  return [...MIN_SCORE_OPTIONS, { value: current, label: `${current}+` }].sort((a, b) => a.value - b.value)
 }
 
 function JobList({ data, onPage }: { data: JobListResponse; onPage: (page: number) => void }) {
